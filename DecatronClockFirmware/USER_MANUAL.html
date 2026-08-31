@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Single Decatron Clock - User Manual</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        h1 {
+            color: #1a73e8;
+            border-bottom: 2px solid #1a73e8;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #1a73e8;
+            margin-top: 30px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+        h3 {
+            color: #444;
+            margin-top: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+        code {
+            background-color: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .note {
+            background-color: #e8f4fd;
+            border-left: 4px solid #1a73e8;
+            padding: 10px 15px;
+            margin: 15px 0;
+        }
+        ul, ol {
+            margin: 10px 0;
+        }
+        li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Single Decatron Clock - User Manual</h1>
+<p><strong>Firmware Version 4</strong></p>
+
+<h2>Table of Contents</h2>
+<ol>
+    <li>Introduction</li>
+    <li>Hardware Overview</li>
+    <li>Initial Setup</li>
+    <li>Understanding the Display</li>
+    <li>Web Interface</li>
+    <li>Configuration Options</li>
+    <li>Blanking and Power Management</li>
+    <li>Time Sources</li>
+    <li>Button Functions</li>
+    <li>Troubleshooting</li>
+    <li>Technical Specifications</li>
+</ol>
+
+<h2>1. Introduction</h2>
+
+<p>The Single Decatron Clock is a unique timepiece that uses a Decatron tube - a vintage gas discharge counting tube - to display the current time. The Decatron tube contains 10 cathodes arranged in a circle, and glowing dots rotate around the tube to indicate hours, minutes, and optionally seconds.</p>
+
+<p>The clock synchronizes time automatically via the internet using NTP (Network Time Protocol) and includes a battery-backed real-time clock for maintaining time during power outages.</p>
+
+<h3>Key Features</h3>
+<ul>
+    <li><strong>Automatic time synchronization</strong> via NTP</li>
+    <li><strong>Battery-backed RTC</strong> for time persistence during power loss</li>
+    <li><strong>Web-based configuration</strong> interface</li>
+    <li><strong>Configurable display blanking</strong> based on time of day or motion detection</li>
+    <li><strong>Optional PIR motion sensor</strong> support</li>
+    <li><strong>Over-the-air firmware updates</strong></li>
+    <li><strong>Multiple timezone support</strong></li>
+</ul>
+
+<h2>2. Hardware Overview</h2>
+
+<h3>Components</h3>
+<table>
+    <tr><th>Component</th><th>Description</th></tr>
+    <tr><td>Decatron Tube</td><td>10-cathode gas discharge display tube</td></tr>
+    <tr><td>ESP8266 (D1 Mini)</td><td>WiFi-enabled microcontroller</td></tr>
+    <tr><td>DS1307 RTC</td><td>Battery-backed real-time clock (optional but recommended)</td></tr>
+    <tr><td>PIR Sensor</td><td>Motion detector for auto-blanking (optional)</td></tr>
+    <tr><td>Push Button</td><td>Factory reset and future functions</td></tr>
+</table>
+
+<h3>Pin Connections</h3>
+<table>
+    <tr><th>Pin</th><th>Function</th></tr>
+    <tr><td>D7</td><td>Decatron Guide 1 (G1)</td></tr>
+    <tr><td>D8</td><td>Decatron Guide 2 (G2)</td></tr>
+    <tr><td>D6</td><td>Index Detection</td></tr>
+    <tr><td>D5</td><td>High Voltage Enable</td></tr>
+    <tr><td>D4</td><td>PIR Motion Sensor (optional)</td></tr>
+    <tr><td>D3</td><td>Push Button</td></tr>
+    <tr><td>D1</td><td>I2C Clock (SCL) for RTC</td></tr>
+    <tr><td>D2</td><td>I2C Data (SDA) for RTC</td></tr>
+</table>
+
+<h2>3. Initial Setup</h2>
+
+<h3>Step 1: Power On</h3>
+<p>When powered on for the first time (or after a factory reset), the clock will create a WiFi access point for configuration.</p>
+
+<h3>Step 2: Connect to WiFi Configuration Portal</h3>
+<ol>
+    <li>On your phone or computer, look for a WiFi network named <strong>"decatron"</strong></li>
+    <li>Connect to this network using password: <strong>SetMeUp!</strong></li>
+    <li>A configuration portal should open automatically</li>
+    <li>If it doesn't open automatically, navigate to <code>192.168.4.1</code> in your web browser</li>
+</ol>
+
+<h3>Step 3: Configure WiFi</h3>
+<ol>
+    <li>Select your home WiFi network from the list</li>
+    <li>Enter your WiFi password</li>
+    <li>Click <strong>Save</strong></li>
+    <li>The clock will restart and connect to your network</li>
+</ol>
+
+<h3>Step 4: Access the Web Interface</h3>
+<p>Once connected to your network, you can access the clock's web interface:</p>
+<ul>
+    <li><strong>By hostname:</strong> <code>http://decatron.local</code> (if mDNS is supported on your network)</li>
+    <li><strong>By IP address:</strong> Check your router's connected devices list to find the clock's IP address</li>
+</ul>
+
+<h3>Step 5: Configure Time Settings</h3>
+<ol>
+    <li>Navigate to the <strong>Time Server</strong> page</li>
+    <li>Select your timezone (see Timezone Configuration section)</li>
+    <li>The clock will automatically sync time from the NTP server</li>
+</ol>
+
+<h2>4. Understanding the Display</h2>
+
+<p>The Decatron tube displays time using up to three glowing dots that rotate around the tube's circular display:</p>
+
+<h3>Display Elements</h3>
+<table>
+    <tr><th>Dot</th><th>Represents</th><th>Position Calculation</th></tr>
+    <tr><td>Hours</td><td>Current hour (12-hour format)</td><td>Hour position on a 30-point scale</td></tr>
+    <tr><td>Minutes</td><td>Current minutes</td><td>Minutes divided by 2 (0-29)</td></tr>
+    <tr><td>Seconds</td><td>Current seconds (optional)</td><td>Seconds divided by 2 (0-29)</td></tr>
+</table>
+
+<h3>Reading the Time</h3>
+<p>The display works similar to an analog clock face:</p>
+<ul>
+    <li>The <strong>hours dot</strong> shows the current hour</li>
+    <li>The <strong>minutes dot</strong> shows the current minutes</li>
+    <li>The <strong>seconds dot</strong> (if enabled) shows the current seconds</li>
+</ul>
+<p>Since the Decatron has 10 cathodes with 3 phases each (30 positions total), the time is mapped to these 30 positions. Hours are converted from 24-hour to 12-hour format. Minutes and seconds are divided by 2 to fit the 30-position display.</p>
+
+<h3>Flash Mode</h3>
+<p>When flash mode is enabled:</p>
+<ul>
+    <li>The seconds dot blinks on and off</li>
+    <li>The minutes dot blinks alternately every 500ms</li>
+    <li>This helps distinguish between the different time elements</li>
+</ul>
+
+<h2>5. Web Interface</h2>
+
+<p>The clock provides a web-based interface for configuration and status monitoring.</p>
+
+<h3>Default Login Credentials</h3>
+<p>If authentication is enabled:</p>
+<ul>
+    <li><strong>Username:</strong> admin</li>
+    <li><strong>Password:</strong> setup</li>
+</ul>
+
+<h3>Main Pages</h3>
+
+<h4>Summary Page (/)</h4>
+<p>The home page displays:</p>
+<ul>
+    <li><strong>WiFi Status:</strong> Connected network and signal strength</li>
+    <li><strong>Current Time:</strong> Local time and timezone</li>
+    <li><strong>System Uptime:</strong> How long the clock has been running</li>
+    <li><strong>NTP Status:</strong> Last sync time and next update</li>
+    <li><strong>Clock Information:</strong> Motion sensor status, time source, RTC status</li>
+    <li><strong>System Information:</strong> ESP8266 details, memory usage</li>
+    <li><strong>I2C Devices:</strong> Detected devices on the I2C bus</li>
+</ul>
+
+<h4>Status Indicators</h4>
+<table>
+    <tr><th>Letter</th><th>Uppercase</th><th>Lowercase</th></tr>
+    <tr><td>W</td><td>WiFi connected</td><td>WiFi disconnected</td></tr>
+    <tr><td>N</td><td>NTP time valid</td><td>NTP time invalid</td></tr>
+    <tr><td>S</td><td>SPIFFS mounted</td><td>SPIFFS error</td></tr>
+    <tr><td>U</td><td>OTA update available</td><td>OTA unavailable</td></tr>
+    <tr><td>A</td><td>Authentication enabled</td><td>Authentication disabled</td></tr>
+    <tr><td>D</td><td>Debug mode on</td><td>Debug mode off</td></tr>
+</table>
+
+<h4>Time Server Page (/time)</h4>
+<p>Configure NTP and timezone settings:</p>
+<ul>
+    <li>NTP server pool selection</li>
+    <li>Update interval</li>
+    <li>Timezone string</li>
+</ul>
+
+<h4>Clock Configuration Page (/clockconfig)</h4>
+<p>Configure display and blanking options:</p>
+<ul>
+    <li>Show/hide seconds</li>
+    <li>Flash mode on/off</li>
+    <li>Display rotation calibration</li>
+    <li>Spin-up speed</li>
+    <li>Blanking schedules</li>
+    <li>Motion detector settings</li>
+    <li>Authentication settings</li>
+</ul>
+
+<h4>Utility Page (/utility)</h4>
+<p>Maintenance functions:</p>
+<ul>
+    <li>Reset WiFi settings only</li>
+    <li>Reset configuration only</li>
+    <li>Reset all settings (factory reset)</li>
+    <li>Force NTP update</li>
+    <li>Firmware update (OTA)</li>
+    <li>Enable debug output</li>
+</ul>
+
+<h2>6. Configuration Options</h2>
+
+<h3>General Display Settings</h3>
+<table>
+    <tr><th>Setting</th><th>Options</th><th>Description</th></tr>
+    <tr><td>Show Seconds</td><td>On / Off</td><td>Display the seconds dot</td></tr>
+    <tr><td>Flash Seconds/Minutes</td><td>Flash / Fixed</td><td>Enable blinking mode</td></tr>
+    <tr><td>Display Rotation</td><td>0-9</td><td>Calibrate physical tube alignment</td></tr>
+    <tr><td>Spin-up Speed</td><td>Slow / Medium / Fast</td><td>How quickly display transitions</td></tr>
+</table>
+
+<h3>Display Rotation Calibration</h3>
+<p>If the display appears rotated (12 o'clock is not at the top):</p>
+<ol>
+    <li>Go to <strong>Clock Configuration</strong></li>
+    <li>Adjust the <strong>Display Rotation</strong> value (0-9)</li>
+    <li>Each increment rotates the display by one cathode position</li>
+    <li>Save and observe the display until aligned correctly</li>
+</ol>
+
+<h3>Spin-up Speed</h3>
+<table>
+    <tr><th>Speed</th><th>Delay</th><th>Best For</th></tr>
+    <tr><td>Slow</td><td>200ms</td><td>Visual effect, gentle transition</td></tr>
+    <tr><td>Medium</td><td>100ms</td><td>Balanced performance</td></tr>
+    <tr><td>Fast</td><td>50ms</td><td>Quick updates, minimal motion</td></tr>
+</table>
+
+<h2>7. Blanking and Power Management</h2>
+
+<p>The clock can automatically turn off (blank) the display based on time schedules or motion detection.</p>
+
+<h3>Time-Based Blanking Modes</h3>
+<table>
+    <tr><th>Mode</th><th>Description</th></tr>
+    <tr><td>Never blank</td><td>Display always on</td></tr>
+    <tr><td>Blank all day on weekends</td><td>Off on Saturday and Sunday</td></tr>
+    <tr><td>Blank all day on weekdays</td><td>Off Monday through Friday</td></tr>
+    <tr><td>Blank always</td><td>Display always off</td></tr>
+    <tr><td>Blank hours - every day</td><td>Blank during set hours daily</td></tr>
+    <tr><td>Blank hours - weekdays only</td><td>Blank during hours Mon-Fri</td></tr>
+    <tr><td>Blank hours - weekends only</td><td>Blank during hours Sat-Sun</td></tr>
+    <tr><td>Blank hours - week + all weekends</td><td>Blank hours on weekdays, all day on weekends</td></tr>
+</table>
+
+<h3>Blanking Hour Configuration</h3>
+<p>When using hour-based blanking:</p>
+<ul>
+    <li><strong>Blank From:</strong> Start hour (0-23)</li>
+    <li><strong>Blank To:</strong> End hour (0-23)</li>
+</ul>
+<p><strong>Example:</strong> To blank from 11 PM to 7 AM, set Blank From: 23, Blank To: 7</p>
+
+<h3>Motion Detector (PIR)</h3>
+<p>If a PIR motion sensor is connected:</p>
+<ol>
+    <li>The display turns on when motion is detected</li>
+    <li>The display blanks after the timeout period with no motion</li>
+    <li>Motion detection overrides time-based blanking</li>
+</ol>
+
+<h4>Motion Timeout Options</h4>
+<ul>
+    <li>60 seconds (1 minute)</li>
+    <li>120 seconds (2 minutes)</li>
+    <li>300 seconds (5 minutes)</li>
+    <li>600 seconds (10 minutes)</li>
+    <li>1800 seconds (30 minutes)</li>
+    <li>3600 seconds (1 hour)</li>
+</ul>
+
+<h4>PIR Pullup Setting</h4>
+<p>Enable if your PIR sensor requires an internal pull-up resistor. Most PIR modules have their own pull-up and don't need this.</p>
+
+<h2>8. Time Sources</h2>
+
+<p>The clock uses multiple time sources with automatic fallback:</p>
+
+<h3>Priority Order</h3>
+<ol>
+    <li><strong>NTP (Network Time Protocol)</strong> - Primary source
+        <ul>
+            <li>Syncs time over the internet</li>
+            <li>Default server: pool.ntp.org</li>
+            <li>Update interval: ~2 hours (7261 seconds)</li>
+        </ul>
+    </li>
+    <li><strong>DS1307 RTC</strong> - Backup source
+        <ul>
+            <li>Battery-backed real-time clock</li>
+            <li>Maintains time during power outages</li>
+            <li>Automatically updated when NTP syncs</li>
+        </ul>
+    </li>
+    <li><strong>Internal ESP8266 Time</strong> - Fallback
+        <ul>
+            <li>Used only when NTP and RTC unavailable</li>
+            <li>May drift over time</li>
+        </ul>
+    </li>
+</ol>
+
+<h3>Timezone Configuration</h3>
+<p>The clock uses POSIX timezone strings. Common examples:</p>
+<table>
+    <tr><th>Location</th><th>Timezone String</th></tr>
+    <tr><td>UK (GMT/BST)</td><td><code>GMT0BST,M3.5.0/1,M10.5.0</code></td></tr>
+    <tr><td>Central Europe (CET/CEST)</td><td><code>CET-1CEST,M3.5.0,M10.5.0/3</code></td></tr>
+    <tr><td>US Eastern (EST/EDT)</td><td><code>EST5EDT,M3.2.0,M11.1.0</code></td></tr>
+    <tr><td>US Pacific (PST/PDT)</td><td><code>PST8PDT,M3.2.0,M11.1.0</code></td></tr>
+    <tr><td>Australia Eastern (AEST/AEDT)</td><td><code>AEST-10AEDT,M10.1.0,M4.1.0/3</code></td></tr>
+</table>
+<p>The format is: <code>STD offset DST,start,end</code></p>
+<p>For a comprehensive list, see: <a href="https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv">POSIX Timezone Database</a></p>
+
+<h3>NTP Update Interval</h3>
+<ul>
+    <li><strong>Default:</strong> 7261 seconds (~2 hours)</li>
+    <li><strong>Range:</strong> 60 to 86400 seconds</li>
+    <li>The default avoids round-hour sync times to distribute server load</li>
+</ul>
+
+<h2>9. Button Functions</h2>
+
+<p>The clock has a single push button (connected to pin D3):</p>
+
+<h3>Factory Reset</h3>
+<p>To perform a factory reset:</p>
+<ol>
+    <li>Power off the clock</li>
+    <li>Press and hold the button</li>
+    <li>Power on the clock while holding the button</li>
+    <li>Continue holding for at least 1 second</li>
+    <li>Release the button</li>
+    <li>The clock will reset all settings and enter WiFi configuration mode</li>
+</ol>
+
+<h2>10. Troubleshooting</h2>
+
+<h3>Clock Won't Connect to WiFi</h3>
+<ol>
+    <li>Ensure you're entering the correct WiFi password</li>
+    <li>Check that your router is using 2.4 GHz (ESP8266 doesn't support 5 GHz)</li>
+    <li>Try moving the clock closer to your router</li>
+    <li>Perform a factory reset and reconfigure</li>
+</ol>
+
+<h3>Display Shows Wrong Time</h3>
+<ol>
+    <li>Check the timezone configuration in the web interface</li>
+    <li>Force an NTP update from the Utility page</li>
+    <li>Verify your internet connection is working</li>
+    <li>If you have an RTC, ensure the battery is not depleted</li>
+</ol>
+
+<h3>Display Appears Rotated</h3>
+<ol>
+    <li>Go to Clock Configuration</li>
+    <li>Adjust the Display Rotation value</li>
+    <li>Try different values (0-9) until 12 o'clock is at the top</li>
+</ol>
+
+<h3>Cannot Access Web Interface</h3>
+<ol>
+    <li>Ensure you're on the same network as the clock</li>
+    <li>Try accessing by IP address instead of hostname</li>
+    <li>Check if your router shows the clock as connected</li>
+    <li>Wait a few minutes after power-on for the clock to fully boot</li>
+</ol>
+
+<h3>Display is Dim or Not Working</h3>
+<ol>
+    <li>Check all cable connections</li>
+    <li>Verify the high-voltage power supply is working</li>
+    <li>Check that blanking is not enabled</li>
+    <li>Move around if a PIR sensor is installed (triggers motion detection)</li>
+</ol>
+
+<h3>NTP Sync Fails</h3>
+<ol>
+    <li>Check your internet connection</li>
+    <li>Try a different NTP server (e.g., <code>time.google.com</code>)</li>
+    <li>Verify no firewall is blocking NTP (UDP port 123)</li>
+    <li>The clock will fall back to RTC time if available</li>
+</ol>
+
+<h3>Status Shows 'n' (NTP Invalid)</h3>
+<p>This means NTP hasn't synced successfully. The clock will:</p>
+<ul>
+    <li>Use RTC time if available</li>
+    <li>Retry NTP sync periodically</li>
+    <li>Check the Summary page for more details</li>
+</ul>
+
+<h2>11. Technical Specifications</h2>
+
+<h3>Microcontroller</h3>
+<table>
+    <tr><th>Specification</th><th>Value</th></tr>
+    <tr><td>Platform</td><td>ESP8266 (Lolin D1 Mini)</td></tr>
+    <tr><td>CPU Speed</td><td>160 MHz</td></tr>
+    <tr><td>Flash Memory</td><td>4 MB (2 MB filesystem)</td></tr>
+    <tr><td>WiFi</td><td>802.11 b/g/n (2.4 GHz)</td></tr>
+</table>
+
+<h3>Display</h3>
+<table>
+    <tr><th>Specification</th><th>Value</th></tr>
+    <tr><td>Type</td><td>Decatron gas discharge tube</td></tr>
+    <tr><td>Cathodes</td><td>10</td></tr>
+    <tr><td>Display Positions</td><td>30 (3 phases per cathode)</td></tr>
+    <tr><td>Multiplexing</td><td>~1000 Hz (timer interrupt driven)</td></tr>
+</table>
+
+<h3>Time Accuracy</h3>
+<table>
+    <tr><th>Source</th><th>Accuracy</th></tr>
+    <tr><td>NTP</td><td>Sub-second accuracy when synced</td></tr>
+    <tr><td>RTC</td><td>Typical ±2 ppm drift (~1 minute/year)</td></tr>
+</table>
+
+<h3>Power</h3>
+<table>
+    <tr><th>Specification</th><th>Value</th></tr>
+    <tr><td>Input</td><td>5V DC via USB</td></tr>
+    <tr><td>High Voltage</td><td>Generated internally for Decatron</td></tr>
+</table>
+
+<h3>Network Features</h3>
+<table>
+    <tr><th>Feature</th><th>Value</th></tr>
+    <tr><td>mDNS</td><td>decatron.local</td></tr>
+    <tr><td>Web Server</td><td>Port 80</td></tr>
+    <tr><td>OTA Updates</td><td>Supported (when flash space permits)</td></tr>
+</table>
+
+<h3>Configuration Storage</h3>
+<table>
+    <tr><th>Specification</th><th>Value</th></tr>
+    <tr><td>Format</td><td>JSON</td></tr>
+    <tr><td>Location</td><td>SPIFFS filesystem</td></tr>
+    <tr><td>File</td><td>/config.json</td></tr>
+</table>
+
+<h2>Support and Updates</h2>
+
+<p>For firmware updates, bug reports, and additional documentation, visit the project repository.</p>
+
+<h3>Firmware Update Procedure</h3>
+<ol>
+    <li>Download the latest firmware binary</li>
+    <li>Go to the Utility page in the web interface</li>
+    <li>Click "Choose File" under Firmware Update</li>
+    <li>Select the firmware binary file</li>
+    <li>Click "Update"</li>
+    <li>Wait for the update to complete (do not power off)</li>
+    <li>The clock will restart automatically</li>
+</ol>
+
+<div class="note">
+<strong>Note:</strong> OTA updates require sufficient free flash space. The Summary page indicates OTA availability with 'U' (available) or 'u' (unavailable).
+</div>
+
+<hr>
+<p><em>Single Decatron Clock Firmware - Version 4</em></p>
+
+</body>
+</html>

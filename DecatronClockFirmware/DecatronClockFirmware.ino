@@ -23,6 +23,19 @@
 
 #define DEBUG     false
 
+// ------------------ I2C Slave Protocol ----------------
+// Receives 4 bytes from master once per second:
+//   Byte 1: Hours   (0-23)
+//   Byte 2: Minutes (0-59)
+//   Byte 3: Seconds (0-59)
+//   Byte 4: Control
+//     Bit 0:   Blanked (1 = display is blanked)
+//     Bits 1-4: Primary display mode (from master)
+// ------------------------------------------------------
+
+#define DECATRON_SLAVE_I2C_ADDRESS  106
+#define DECATRON_CTRL_BLANKED       0x01
+
 // ------------------ Decatron Control ----------------
 
 #define INT_MUX_COUNTS_ON   1000
@@ -81,6 +94,14 @@ byte blankSuppressStep = 0;    // The press we are on: 1 press = suppress for 1 
 unsigned long blankSuppressedMillis = 0;   // The end time of the blanking, 0 if we are not suppressed
 unsigned long blankSuppressedSelectionTimoutMillis = 0;   // Used for determining the end of the blanking period selection timeout
 unsigned int spinUpVal = 0;
+
+// --------------------- I2C Slave -----------------
+
+volatile bool i2cDataReceived = false;
+volatile byte i2cHour = 0;
+volatile byte i2cMin  = 0;
+volatile byte i2cSec  = 0;
+volatile byte i2cCtrl = 0;
 
 // --------------------- Misc ----------------------
 
@@ -181,6 +202,23 @@ ICACHE_RAM_ATTR void indexMarkTrigger() {
   }
 }
 
+// ************************************************************
+// I2C slave receive callback - called from interrupt context.
+// Reads 4 bytes: hours, minutes, seconds, control.
+// ************************************************************
+void ICACHE_RAM_ATTR onI2CReceive(int numBytes) {
+  if (numBytes >= 4) {
+    i2cHour = Wire.read();
+    i2cMin  = Wire.read();
+    i2cSec  = Wire.read();
+    i2cCtrl = Wire.read();
+    while (Wire.available()) Wire.read();
+    i2cDataReceived = true;
+  } else {
+    while (Wire.available()) Wire.read();
+  }
+}
+
 // ----------------------------------------------------------------------------------------------------
 // ----------------------------------------------  Set up  --------------------------------------------
 // ----------------------------------------------------------------------------------------------------
@@ -216,9 +254,12 @@ void setup() {
   ntpAsync.setDebugCallback(dbcb);
   ntpAsync.setDebugOutput(debugVal);
 
-  // Start I2C now so that the update from NTP can be sent to the RTC immediately
-  Wire.begin(4, 5); // SDA = D2 = pin 4, SCL = D1 = pin 5
-  debugManager.debugMsg("I2C master started");
+  // Start I2C as slave so the Eniac master can send us time updates.
+  // SDA = D2 = GPIO4, SCL = D1 = GPIO5.
+  // Note: slave mode prevents us acting as I2C master (RTC not accessible).
+  Wire.begin(DECATRON_SLAVE_I2C_ADDRESS);
+  Wire.onReceive(onI2CReceive);
+  debugManager.debugMsg("I2C slave started at address " + String(DECATRON_SLAVE_I2C_ADDRESS));
 
   button1.reset();
 
@@ -310,14 +351,9 @@ void setup() {
   // initialise the internal time (in case we don't find the time provider)
   nowMillis = millis();
 
-  testRTCTimeProvider();
-  if (useRTC) {
-    getRTCTime(true);
-  } else {
-  }
-
-  // Note that we had an RTC to allow the indicator DP to have meaning
-  onceHadAnRTC = useRTC;
+  // RTC is not accessible while in I2C slave mode; time comes from master.
+  useRTC = false;
+  onceHadAnRTC = false;
 
   debugManager.debugMsg("Exit startup");
   spiffs.getStatsFromSpiffs(&current_stats);
@@ -402,6 +438,18 @@ void loop() {
   } else {
     displayMins = displayMinsPrep;
     displaySecs = displaySecsPrep;
+  }
+
+  // Apply time and blanking received from the Eniac master.
+  // This overrides the NTP-based values set in performOncePerSecondProcessing().
+  if (i2cDataReceived) {
+    i2cDataReceived = false;
+    int adjustedHour = (i2cHour % 12) * 60 + i2cMin;
+    float hourFloat = adjustedHour * 30.0 / 720;
+    displayHours    = (byte) hourFloat;
+    displayMinsPrep = i2cMin / 2;
+    displaySecsPrep = i2cSec / 2;
+    blanked = (i2cCtrl & DECATRON_CTRL_BLANKED) != 0;
   }
 
   if (blanked) {
@@ -494,9 +542,7 @@ void performOncePerMinuteProcessing() {
 
   debugManager.debugMsg("nu: " + String(ntpAsync.getNextUpdate(nowMillis)));
 
-  // Set the internal time to the time from the RTC even if we are still in
-  // NTP valid time. This is more accurate than using the internal time source
-  getRTCTime(true);
+  // RTC sync skipped: Wire is in slave mode; time comes from I2C master.
 
   // Usage stats
   current_stats.uptimeMins++;

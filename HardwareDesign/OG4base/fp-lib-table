@@ -1,0 +1,3 @@
+(fp_lib_table
+  (lib (name "NixieClockMaster")(type "KiCad")(uri "${KI_GLOW_CUSTOM}/NixieClockMaster.pretty")(options "")(descr ""))
+)

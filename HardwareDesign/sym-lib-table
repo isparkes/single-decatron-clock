@@ -1,0 +1,6 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "WemosDecatron-rescue")(type "Legacy")(uri "${KIPRJMOD}/WemosDecatron-rescue.lib")(options "")(descr ""))
+  (lib (name "WemosDecatronExternal-rescue")(type "Legacy")(uri "${KIPRJMOD}/WemosDecatronExternal-rescue.lib")(options "")(descr ""))
+  (lib (name "NixieClockMaster")(type "Legacy")(uri "${KI_GLOW_CUSTOM}/libraries/NixieClockMaster.lib")(options "")(descr ""))
+)
